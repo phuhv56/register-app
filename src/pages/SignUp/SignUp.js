@@ -1,6 +1,7 @@
 import React from 'react';
+import axios from 'axios';
 import './SignUp.css';
-import { Button, Form, FormGroup, Label, Input, Col } from 'reactstrap';
+import { Button, Form, FormGroup, Label, Input, Alert } from 'reactstrap';
 import {Link} from 'react-router-dom';
 
 class SignUp extends React.Component {
@@ -9,30 +10,58 @@ class SignUp extends React.Component {
         phoneNumber: "",
         firstName: "",
         lastName: "",
-        birthDate: "",
-        birthMonth: "",
-        birthYear: ""
+        birthday: "",
+        isActiveLogin: false,
+        message: {
+            type: 'success',
+            text: 'Success'
+        },
+        visible: false
     }
 
     onChangeHandle = (e) => {
-        console.log(e.target.name);
-        console.log(e.target.value);
         this.setState({[e.target.name]: e.target.value});
     }
 
     onSubmit = (e) => {
         e.preventDefault();
-        console.log(this.state);
+        let user = {
+            email: this.state.email,
+            first_name: this.state.firstName,
+            last_name: this.state.lastName,
+            gender: this.state.gender,
+            phone_number: this.state.phoneNumber,
+            birthday: this.state.birthday
+        };
+        console.log(user);
+        axios.post('http://localhost:8082/mitrais/user/create', user)
+        .then( res => {
+            this.setState({isActiveLogin: true, visible: true, message: {
+                type: 'success',
+                text: 'Success'
+            }});
+        }).catch( err => {
+            if(err.response) {
+                let message = err.response.data.data;
+                this.setState({visible: true, message: {
+                    type: 'danger',
+                    text: message
+                }});
+            }
+        });
     }
 
     render() {
         return (
             <div className="SignUp">
-                <Form className="register-form">
+                <Form className="register-form" onSubmit={this.onSubmit}>
                     <h2>Registration</h2>
+                    <Alert color={this.state.message.type} isOpen={this.state.visible} >
+                        {this.state.message.text}
+                    </Alert>
                     <FormGroup>
                         <Input 
-                            type="text" 
+                            type="number" 
                             value={this.state.phoneNumber} 
                             onChange={this.onChangeHandle}
                             name="phoneNumber" 
@@ -62,50 +91,22 @@ class SignUp extends React.Component {
                     </FormGroup>
 
                     <Label>Date of birth</Label>
-                    <FormGroup row>
-                        <Col sm={3}>
-                            <Input 
-                                type="select" 
-                                value={this.state.birthDate} 
-                                onChange={this.onChangeHandle}
-                                name="birthDate" 
-                                id="birthDate">
-                                <option value="Date">Date</option>
-                                <option value="01">01</option>
-                                <option value="02">02</option>
-                            </Input>
-                        </Col>
-                        <Col sm={3}>
-                            <Input 
-                                type="select" 
-                                value={this.state.birthMonth} 
-                                onChange={this.onChangeHandle}
-                                name="birthMonth" 
-                                id="birthMonth">
-                                <option value="Month">Month</option>
-                                <option value="01">01</option>
-                                <option value="02">02</option>
-                            </Input>
-                        </Col>
-                        <Col sm={3}>
-                            <Input 
-                                type="select" 
-                                value={this.state.birthYear} 
-                                onChange={this.onChangeHandle}
-                                name="birthYear"
-                                id="birthYear">
-                                <option value="Year">Year</option>
-                                <option value="1970">1970</option>
-                                <option value="1971">1971</option>
-                            </Input>
-                        </Col>
+                    <FormGroup>
+                        <Input
+                            type="date"
+                            value={this.state.birthday} 
+                            onChange={this.onChangeHandle}
+                            name="birthday"
+                            id="birthday"
+                            placeholder="Birthday"
+                        />
                     </FormGroup>
 
                     <FormGroup tag="fieldset" inline>
                         <FormGroup check>
                             <Input 
                                 type="radio" 
-                                value = 'male'
+                                value = '1'
                                 onChange={this.onChangeHandle}
                                 name="gender" />{' '}
                             Male
@@ -113,7 +114,7 @@ class SignUp extends React.Component {
                         <FormGroup check>
                             <Input 
                                 type="radio" 
-                                value = 'female'
+                                value = '0'
                                 onChange={this.onChangeHandle}
                                 name="gender" />{' '}
                             Female
@@ -130,11 +131,11 @@ class SignUp extends React.Component {
                             placeholder="Email" />
                     </FormGroup>
                     <FormGroup>
-                        <Button id="registerBtn" onClick={this.onSubmit}>Register</Button>
+                        <Button id="registerBtn" disabled={this.state.isActiveLogin}>Register</Button>
                     </FormGroup>
                 </Form>
                 <Link to="/signin">
-                    <Button id="loginBtn">Login</Button>
+                    <Button id="loginBtn" disabled={!this.state.isActiveLogin}>Login</Button>
                 </Link>
             </div>
         );
